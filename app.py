@@ -112,7 +112,10 @@ def load_passwords(file_path):
     with open(file_path, 'r', encoding="ISO-8859-1") as file:
         return [line.strip() for line in file.readlines()]
 
-!wget https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt
+import subprocess
+
+url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+subprocess.run(["wget", url])
 
 !ls -lh rockyou.txt
 
