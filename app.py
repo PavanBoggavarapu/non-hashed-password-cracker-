@@ -117,9 +117,15 @@ import subprocess
 url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
 subprocess.run(["wget", url])
 
-!ls -lh rockyou.txt
+import subprocess
 
-!head -n 10 rockyou.txt
+subprocess.run(["ls", "-lh", "rockyou.txt"])
+
+
+import subprocess
+
+subprocess.run(["head", "-n", "10", "rockyou.txt"])
+
 
 import itertools
 import string
