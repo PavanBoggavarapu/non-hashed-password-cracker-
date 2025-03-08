@@ -4,6 +4,16 @@ import string
 import os
 import time
 
+import os
+import subprocess
+
+wordlist_path = "rockyou.txt"
+
+if not os.path.exists(wordlist_path):
+    print("📥 Downloading rockyou.txt...")
+    url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+    subprocess.run(["wget", url, "-O", wordlist_path])
+
 # Function to load passwords from a wordlist file
 def load_passwords(file_path):
     try:
