@@ -3,15 +3,26 @@ import itertools
 import string
 import os
 import time
+import subprocess
 
-
+# Function to download rockyou.txt if not found
+def download_wordlist(file_path):
+    if not os.path.exists(file_path):
+        st.warning(f"⚠️ Wordlist '{file_path}' not found. Downloading rockyou.txt...")
+        url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+        subprocess.run(["wget", url, "-O", file_path])
 
 # Function to load passwords from a wordlist file
 def load_passwords(file_path):
+    if not os.path.exists(file_path):
+        st.error("❌ Error: Wordlist file not found.")
+        return []
+    
     try:
         with open(file_path, 'r', encoding="latin-1") as file:
             return [line.strip() for line in file.readlines()]
-    except FileNotFoundError:
+    except Exception as e:
+        st.error(f"❌ Error reading file: {e}")
         return []
 
 # Dictionary Attack
@@ -53,6 +64,8 @@ st.title("🔐 Password Cracker")
 
 # User input
 wordlist_file = st.text_input("Enter wordlist file path (Default: rockyou.txt):", "rockyou.txt")
+download_wordlist(wordlist_file)  # Ensure the wordlist is available
+
 target_password = st.text_input("Enter the password to crack:", type="password")
 attack_type = st.selectbox("Choose attack type:", ["Dictionary", "Brute-Force", "Hybrid", "Rule-Based"])
 
@@ -61,7 +74,7 @@ password_list = load_passwords(wordlist_file)
 
 if st.button("Start Attack"):
     start_time = time.time()
-    
+
     if attack_type == "Dictionary":
         result = dictionary_attack(target_password, password_list)
     elif attack_type == "Brute-Force":
@@ -72,15 +85,25 @@ if st.button("Start Attack"):
         result = hybrid_attack(target_password, password_list)
     else:
         result = "❌ Invalid attack type."
-    
+
     end_time = time.time()
+
+    # Display result
+    if "✅" in result:
+        st.success(result)
+    else:
+        st.error(result)
     
-    st.success(result)
     st.write(f"⏳ Execution Time: {end_time - start_time:.4f} seconds")
-    
+
     # Log successful attempts
     if "✅" in result:
         cracked_password = result.split(": ")[-1]
         with open("cracked_passwords.txt", "a") as file:
             file.write(f"Password found: {cracked_password}\n")
-        st.write(f"Password saved: {cracked_password}")
+        st.write(f"📂 Password saved: {cracked_password}")
+
+    # Log failed attempts
+    else:
+        with open("failed_attempts.txt", "a") as file:
+            file.write(f"Failed to crack: {target_password}\n")
