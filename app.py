@@ -1,4 +1,3 @@
-
 import streamlit as st
 import itertools
 import string
@@ -9,12 +8,19 @@ import requests
 # Function to download rockyou.txt if not found
 def download_wordlist(file_path):
     url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+    
+    if os.path.exists(file_path):
+        return  # Skip download if already exists
+    
     try:
         st.warning(f"⚠️ Wordlist '{file_path}' not found. Downloading rockyou.txt...")
         response = requests.get(url, stream=True)
+        response.raise_for_status()  # Check for errors
+        
         with open(file_path, "wb") as file:
             for chunk in response.iter_content(chunk_size=1024):
                 file.write(chunk)
+        
         st.success("✅ rockyou.txt downloaded successfully!")
     except Exception as e:
         st.error(f"❌ Failed to download rockyou.txt: {e}")
@@ -27,8 +33,8 @@ def load_passwords(file_path):
     try:
         with open(file_path, 'r', encoding="latin-1") as file:
             return [line.strip() for line in file.readlines()]
-    except FileNotFoundError:
-        st.error("❌ Wordlist file still missing after attempted download.")
+    except Exception as e:
+        st.error(f"❌ Error loading wordlist: {e}")
         return []
 
 # Dictionary Attack
@@ -77,27 +83,30 @@ attack_type = st.selectbox("Choose attack type:", ["Dictionary", "Brute-Force", 
 password_list = load_passwords(wordlist_file)
 
 if st.button("Start Attack"):
-    start_time = time.time()
-    
-    if attack_type == "Dictionary":
-        result = dictionary_attack(target_password, password_list)
-    elif attack_type == "Brute-Force":
-        result = brute_force_attack(target_password)
-    elif attack_type == "Rule-Based":
-        result = rule_based_attack(target_password, password_list)
-    elif attack_type == "Hybrid":
-        result = hybrid_attack(target_password, password_list)
+    if not target_password:
+        st.error("❌ Please enter a password to crack.")
     else:
-        result = "❌ Invalid attack type."
-    
-    end_time = time.time()
-    
-    st.success(result)
-    st.write(f"⏳ Execution Time: {end_time - start_time:.4f} seconds")
-    
-    # Log successful attempts
-    if "✅" in result:
-        cracked_password = result.split(": ")[-1]
-        with open("cracked_passwords.txt", "a") as file:
-            file.write(f"Password found: {cracked_password}\n")
-        st.write(f"Password saved: {cracked_password}")
+        start_time = time.time()
+
+        if attack_type == "Dictionary":
+            result = dictionary_attack(target_password, password_list)
+        elif attack_type == "Brute-Force":
+            result = brute_force_attack(target_password)
+        elif attack_type == "Rule-Based":
+            result = rule_based_attack(target_password, password_list)
+        elif attack_type == "Hybrid":
+            result = hybrid_attack(target_password, password_list)
+        else:
+            result = "❌ Invalid attack type."
+
+        end_time = time.time()
+
+        st.success(result)
+        st.write(f"⏳ Execution Time: {end_time - start_time:.4f} seconds")
+        
+        # Log successful attempts
+        if "✅" in result:
+            cracked_password = result.split(": ")[-1]
+            with open("cracked_passwords.txt", "a") as file:
+                file.write(f"Password found: {cracked_password}\n")
+            st.write(f"📌 Password saved: {cracked_password}")
